@@ -51,4 +51,19 @@ class StaxParserTest {
         assertEquals(1, books.size());
         assertEquals("value", books.get(0));
     }
+
+    @Test
+    public void shouldProcessMultipleOptions() throws XMLStreamException {
+        StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>");
+        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+        Handler root = Handler.root();
+        List<String> fields = new ArrayList<>();
+        root.then("book")
+                .or("author", h -> h.text(s -> fields.add("author=" + s)))
+                .or("title", h -> h.text(s -> fields.add("title=" + s)));
+        parser.read(root);
+        assertEquals(2, fields.size());
+        assertTrue(fields.contains("author=a"));
+        assertTrue(fields.contains("title=x"));
+    }
 }

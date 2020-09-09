@@ -30,11 +30,9 @@ public class Handler implements XmlNodeHandler {
         return nextHandler;
     }
 
-    public Handler or(String token, Handler nextHandler) {
-        if (children == null) {
-            throw new IllegalStateException("Call 'then' before 'or'");
-        }
-        return then(token);
+    public Handler or(String token, Consumer<Handler> consumer) {
+        consumer.accept(then(token));
+        return this;
     }
 
     public Handler text(Consumer<String> consumer) {
