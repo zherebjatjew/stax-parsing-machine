@@ -17,24 +17,26 @@ class StaxParserTest {
 
     @Test
     public void shouldProcessSingleElement() throws XMLStreamException {
-        StringReader reader = new StringReader("<item>value</item>");
-        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-        Handler root = Handler.root();
         List<String> books = new ArrayList<>();
-        root.then("item").text(books::add);
-        parser.read(root);
+        try (StringReader reader = new StringReader("<item>value</item>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("item").text(books::add);
+            parser.read(root);
+        }
         assertEquals(1, books.size());
         assertEquals("value", books.get(0));
     }
 
     @Test
     public void shouldProcessMultipleElement() throws XMLStreamException {
-        StringReader reader = new StringReader("<library><book>text1</book><book>text2</book></library>");
-        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-        Handler root = Handler.root();
         List<String> books = new ArrayList<>();
-        root.then("library").then("book").text(books::add);
-        parser.read(root);
+        try (StringReader reader = new StringReader("<library><book>text1</book><book>text2</book></library>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("library").then("book").text(books::add);
+            parser.read(root);
+        }
         assertEquals(2, books.size());
         assertTrue(books.contains("text1"));
         assertTrue(books.contains("text2"));
@@ -42,26 +44,28 @@ class StaxParserTest {
 
     @Test
     public void shouldProcessLongPaths() throws XMLStreamException {
-        StringReader reader = new StringReader("<city><library><book>value</book></library></city>");
-        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-        Handler root = Handler.root();
         List<String> books = new ArrayList<>();
-        root.then("city").then("library").then("book").text(books::add);
-        parser.read(root);
+        try (StringReader reader = new StringReader("<city><library><book>value</book></library></city>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("city").then("library").then("book").text(books::add);
+            parser.read(root);
+        }
         assertEquals(1, books.size());
         assertEquals("value", books.get(0));
     }
 
     @Test
     public void shouldProcessMultipleOptions() throws XMLStreamException {
-        StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>");
-        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-        Handler root = Handler.root();
         List<String> fields = new ArrayList<>();
-        root.then("book")
-                .or("author", h -> h.text(s -> fields.add("author=" + s)))
-                .or("title", h -> h.text(s -> fields.add("title=" + s)));
-        parser.read(root);
+        try (StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("book")
+                    .or("author", h -> h.text(s -> fields.add("author=" + s)))
+                    .or("title", h -> h.text(s -> fields.add("title=" + s)));
+            parser.read(root);
+        }
         assertEquals(2, fields.size());
         assertTrue(fields.contains("author=a"));
         assertTrue(fields.contains("title=x"));
@@ -69,30 +73,32 @@ class StaxParserTest {
 
     @Test
     public void shouldPropagateChildValue() throws XMLStreamException {
-        StringReader reader = new StringReader("<book><author>a</author></book>");
-        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-        Handler root = Handler.root();
         List<String> fields = new ArrayList<>();
-        root.then("book").close(h -> fields.add(h.getProperty("author"))).then("author").propagate();
-        parser.read(root);
+        try (StringReader reader = new StringReader("<book><author>a</author></book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("book").close(h -> fields.add(h.getProperty("author"))).then("author").propagate();
+            parser.read(root);
+        }
         assertEquals(1, fields.size());
         assertEquals("a", fields.get(0));
     }
 
     @Test
     public void shouldPropagateMultipleValues() throws XMLStreamException {
-        StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>");
-        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-        Handler root = Handler.root();
         List<String> fields = new ArrayList<>();
-        root.then("book")
-                .or("author", Handler::propagate)
-                .or("title", Handler::propagate)
-                .close(h -> {
-                    fields.add("author=" + h.getProperty("author"));
-                    fields.add("title=" + h.getProperty("title"));
-                });
-        parser.read(root);
+        try (StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("book")
+                    .or("author", Handler::propagate)
+                    .or("title", Handler::propagate)
+                    .close(h -> {
+                        fields.add("author=" + h.getProperty("author"));
+                        fields.add("title=" + h.getProperty("title"));
+                    });
+            parser.read(root);
+        }
         assertEquals(2, fields.size());
         assertTrue(fields.contains("author=a"));
         assertTrue(fields.contains("title=x"));
@@ -100,19 +106,20 @@ class StaxParserTest {
 
     @Test
     public void shouldPropagateNestedValues() throws XMLStreamException {
-        StringReader reader = new StringReader("<book><meta><author>a</author><title>x</title></meta></book>");
-        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-        Handler root = Handler.root();
         List<String> fields = new ArrayList<>();
-        root.then("book")
-                .close(h -> {
-                    fields.add("author=" + h.getProperty("meta/author"));
-                    fields.add("title=" + h.getProperty("meta/title"));
-                }).then("meta")
+        try (StringReader reader = new StringReader("<book><meta><author>a</author><title>x</title></meta></book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("book")
+                    .close(h -> {
+                        fields.add("author=" + h.getProperty("meta/author"));
+                        fields.add("title=" + h.getProperty("meta/title"));
+                    }).then("meta")
                     .or("author", Handler::propagate)
                     .or("title", Handler::propagate)
                     .propagate();
-        parser.read(root);
+            parser.read(root);
+        }
         assertEquals(2, fields.size());
         assertTrue(fields.contains("author=a"));
         assertTrue(fields.contains("title=x"));

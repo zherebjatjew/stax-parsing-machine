@@ -1,0 +1,18 @@
+<library>
+    <book>
+        <title>t</title>
+        <author>a</author>
+        <file>
+            <type>cover</type>
+            <path>cover.jpg</path>
+        </file>
+        <file>
+            <path>image1.jpg</path>
+            <type>illustration</type>
+        </file>
+        <file>
+            <path>image2.jpg</path>
+            <type>illustration</type>
+        </file>
+    </book>
+</library>
