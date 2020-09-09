@@ -43,6 +43,19 @@ class StaxParserTest {
     }
 
     @Test
+    public void shouldSkipNodes() throws XMLStreamException {
+        List<String> books = new ArrayList<>();
+        try (StringReader reader = new StringReader("<library><disc>text0</disc><book>text1</book></library>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            Handler root = Handler.root();
+            root.then("library").then("book").text(books::add);
+            parser.read(root);
+        }
+        assertEquals(1, books.size());
+        assertTrue(books.contains("text1"));
+    }
+
+    @Test
     public void shouldProcessLongPaths() throws XMLStreamException {
         List<String> books = new ArrayList<>();
         try (StringReader reader = new StringReader("<city><library><book>value</book></library></city>")) {

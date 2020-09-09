@@ -5,6 +5,10 @@ import javax.xml.stream.XMLStreamConstants;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+
+/**
+ * Pure XML traversing logic.
+ */
 public abstract class AbstractXmlParser {
     private final Deque<XmlNodeHandler> handlers = new ArrayDeque<>();
 
@@ -53,9 +57,22 @@ public abstract class AbstractXmlParser {
         }
     }
 
+    /**
+     * Read next tag.
+     *
+     * @return see {@link XMLStreamConstants}
+     */
     protected abstract int next();
 
+    /**
+     * Get element name
+     * @return name
+     */
     protected abstract String getElementName();
 
+    /**
+     * Get element text
+     * @return text of element
+     */
     protected abstract String getElementText();
 }

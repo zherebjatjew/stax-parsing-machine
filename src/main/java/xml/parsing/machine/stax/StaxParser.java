@@ -6,6 +6,9 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 
+/**
+ * Implementation of parser for streaming xml parser. See {@link XMLStreamReader}.
+ */
 public class StaxParser extends AbstractXmlParser {
 
     private final XMLStreamReader reader;
