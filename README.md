@@ -74,8 +74,8 @@ try (StringReader reader = new StringReader(xml) {
 ```
 Output:
 ```text
-Neil Gaiman;American Gods
-Chuck Palahniuk;Fight Club
+Neil Gaiman,American Gods
+Chuck Palahniuk,Fight Club
 ```
 Values can be propagated further. In this case their names get path reflecting source of the value.
 E.g., in the snippet above, if you propagated book node, you can address values from library node
