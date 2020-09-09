@@ -67,4 +67,9 @@ class HandlerTest {
                 IllegalArgumentException.class,
                 () -> RootHandler.instance().then("test").text(null));
     }
+
+    @Override
+    public String toString() {
+        return "RootHandler()";
+    }
 }

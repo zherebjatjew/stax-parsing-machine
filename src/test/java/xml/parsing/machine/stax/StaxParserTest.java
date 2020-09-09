@@ -147,7 +147,7 @@ class StaxParserTest {
                         fields.add("author=" + h.getProperty("meta/author"));
                         fields.add("title=" + h.getProperty("meta/title"));
                     }).then("meta")
-                    .or("author", Handler::propagate)
+                    .or("author", x -> x.text(System.out::println))
                     .or("title", Handler::propagate)
                     .propagate();
             parser.read(root);
@@ -155,5 +155,17 @@ class StaxParserTest {
         assertEquals(2, fields.size());
         assertTrue(fields.contains("author=a"));
         assertTrue(fields.contains("title=x"));
+    }
+
+    @Test
+    public void shouldSkipAttributes() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<book name='book title'>text</book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            RootHandler root = RootHandler.instance();
+            root.then("book").text(fields::add);
+            parser.read(root);
+        }
+        assertEquals("text", fields.get(0));
     }
 }
