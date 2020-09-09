@@ -8,6 +8,8 @@ import java.util.function.Supplier;
 public class Handler implements XmlNodeHandler {
     private int depth = 1;
     private boolean active = false;
+    private String token;
+    private Map<String, String> values;
     private Map<String, Handler> children = null;
     private Consumer<String> textConsumer = null;
     private Consumer<Handler> finallyConsumer = null;
@@ -21,6 +23,7 @@ public class Handler implements XmlNodeHandler {
 
     public Handler then(String token) {
         Handler nextHandler = new Handler();
+        nextHandler.token = token;
         if (children == null) {
             children = new HashMap<>();
         }
@@ -40,9 +43,26 @@ public class Handler implements XmlNodeHandler {
         return this;
     }
 
+    public Handler propagate() {
+        if (token == null) {
+            throw new IllegalStateException("Can not propagate root handler");
+        }
+        values = new HashMap<>();
+        textConsumer = x -> values.put(null, x);
+        return this;
+    }
+
     public Handler close(Consumer<Handler> consumer) {
         finallyConsumer = consumer;
         return this;
+    }
+
+    public String getProperty(String name) {
+        if (values == null) {
+            return null;
+        } else {
+            return values.get(name);
+        }
     }
 
     protected Handler() {}
@@ -79,6 +99,21 @@ public class Handler implements XmlNodeHandler {
         active = false;
         if (finallyConsumer != null) {
             finallyConsumer.accept(this);
+        }
+        if (values != null && parent instanceof Handler) {
+            Handler h = (Handler) parent;
+            if (h.values == null) {
+                h.values = new HashMap<>();
+            }
+            values.forEach((k,v) -> {
+                String key;
+                if (k == null) {
+                    key = token;
+                } else {
+                    key = token + '/' + k;
+                }
+                h.values.put(key, v);
+            });
         }
     }
 

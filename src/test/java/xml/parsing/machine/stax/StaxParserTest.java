@@ -66,4 +66,55 @@ class StaxParserTest {
         assertTrue(fields.contains("author=a"));
         assertTrue(fields.contains("title=x"));
     }
+
+    @Test
+    public void shouldPropagateChildValue() throws XMLStreamException {
+        StringReader reader = new StringReader("<book><author>a</author></book>");
+        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+        Handler root = Handler.root();
+        List<String> fields = new ArrayList<>();
+        root.then("book").close(h -> fields.add(h.getProperty("author"))).then("author").propagate();
+        parser.read(root);
+        assertEquals(1, fields.size());
+        assertEquals("a", fields.get(0));
+    }
+
+    @Test
+    public void shouldPropagateMultipleValues() throws XMLStreamException {
+        StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>");
+        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+        Handler root = Handler.root();
+        List<String> fields = new ArrayList<>();
+        root.then("book")
+                .or("author", Handler::propagate)
+                .or("title", Handler::propagate)
+                .close(h -> {
+                    fields.add("author=" + h.getProperty("author"));
+                    fields.add("title=" + h.getProperty("title"));
+                });
+        parser.read(root);
+        assertEquals(2, fields.size());
+        assertTrue(fields.contains("author=a"));
+        assertTrue(fields.contains("title=x"));
+    }
+
+    @Test
+    public void shouldPropagateNestedValues() throws XMLStreamException {
+        StringReader reader = new StringReader("<book><meta><author>a</author><title>x</title></meta></book>");
+        StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+        Handler root = Handler.root();
+        List<String> fields = new ArrayList<>();
+        root.then("book")
+                .close(h -> {
+                    fields.add("author=" + h.getProperty("meta/author"));
+                    fields.add("title=" + h.getProperty("meta/title"));
+                }).then("meta")
+                    .or("author", Handler::propagate)
+                    .or("title", Handler::propagate)
+                    .propagate();
+        parser.read(root);
+        assertEquals(2, fields.size());
+        assertTrue(fields.contains("author=a"));
+        assertTrue(fields.contains("title=x"));
+    }
 }
