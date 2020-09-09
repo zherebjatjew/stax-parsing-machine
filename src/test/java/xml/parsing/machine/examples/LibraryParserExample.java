@@ -2,6 +2,7 @@ package xml.parsing.machine.examples;
 
 import org.junit.jupiter.api.Test;
 import xml.parsing.machine.api.Handler;
+import xml.parsing.machine.api.RootHandler;
 import xml.parsing.machine.stax.StaxParser;
 
 import javax.xml.stream.XMLInputFactory;
@@ -35,7 +36,7 @@ public class LibraryParserExample {
         try (FileInputStream reader = new FileInputStream(f)) {
             XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             // Expect path library/book
             root.then("library").then("book")
                 // When we met a book, we create a new Book instance to fill later

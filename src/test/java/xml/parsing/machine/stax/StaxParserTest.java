@@ -2,6 +2,7 @@ package xml.parsing.machine.stax;
 
 import org.junit.jupiter.api.Test;
 import xml.parsing.machine.api.Handler;
+import xml.parsing.machine.api.RootHandler;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -20,7 +21,7 @@ class StaxParserTest {
         List<String> books = new ArrayList<>();
         try (StringReader reader = new StringReader("<item>value</item>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("item").text(books::add);
             parser.read(root);
         }
@@ -33,7 +34,7 @@ class StaxParserTest {
         List<String> books = new ArrayList<>();
         try (StringReader reader = new StringReader("<library><book>text1</book><book>text2</book></library>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("library").then("book").text(books::add);
             parser.read(root);
         }
@@ -47,7 +48,7 @@ class StaxParserTest {
         List<String> books = new ArrayList<>();
         try (StringReader reader = new StringReader("<library><disc>text0</disc><book>text1</book></library>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("library").then("book").text(books::add);
             parser.read(root);
         }
@@ -60,7 +61,7 @@ class StaxParserTest {
         List<String> books = new ArrayList<>();
         try (StringReader reader = new StringReader("<city><library><book>value</book></library></city>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("city").then("library").then("book").text(books::add);
             parser.read(root);
         }
@@ -73,7 +74,7 @@ class StaxParserTest {
         List<String> fields = new ArrayList<>();
         try (StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("book")
                     .or("author", h -> h.text(s -> fields.add("author=" + s)))
                     .or("title", h -> h.text(s -> fields.add("title=" + s)));
@@ -89,7 +90,7 @@ class StaxParserTest {
         List<String> fields = new ArrayList<>();
         try (StringReader reader = new StringReader("<book><author>a</author></book>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("book").close(h -> fields.add(h.getProperty("author"))).then("author").propagate();
             parser.read(root);
         }
@@ -102,7 +103,7 @@ class StaxParserTest {
         List<String> fields = new ArrayList<>();
         try (StringReader reader = new StringReader("<book><author>a</author><title>x</title></book>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("book")
                     .or("author", Handler::propagate)
                     .or("title", Handler::propagate)
@@ -118,11 +119,29 @@ class StaxParserTest {
     }
 
     @Test
+    public void shouldReportForgottenPropagate() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<book></book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            RootHandler root = RootHandler.instance();
+            root.then("book")
+                    .or("author", x -> {})
+                    .or("title", x -> {})
+                    .close(h -> {
+                        fields.add("author=" + h.getProperty("author"));
+                        fields.add("title=" + h.getProperty("title"));
+                    });
+            IllegalStateException ex = assertThrows(IllegalStateException.class, () -> parser.read(root));
+            assertEquals("None of the children provided a value. Did you forgot propagate()?", ex.getMessage());
+        }
+    }
+
+    @Test
     public void shouldPropagateNestedValues() throws XMLStreamException {
         List<String> fields = new ArrayList<>();
         try (StringReader reader = new StringReader("<book><meta><author>a</author><title>x</title></meta></book>")) {
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            Handler root = Handler.root();
+            RootHandler root = RootHandler.instance();
             root.then("book")
                     .close(h -> {
                         fields.add("author=" + h.getProperty("meta/author"));

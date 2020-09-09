@@ -12,55 +12,18 @@ import java.util.function.Supplier;
  *
  * @see xml.parsing.machine.examples.LibraryParserExample
  */
-public class Handler implements XmlNodeHandler {
-    private int depth = 1;
-    private boolean active = false;
-    private String token;
+public class Handler extends RootHandler {
+    protected int depth = 1;
+    protected boolean active = false;
+    private final String token;
     private Map<String, String> values;
-    private Map<String, Handler> children = null;
-    private Consumer<String> textConsumer = null;
-    private Consumer<Handler> startConsumer = null;
-    private Consumer<Handler> finallyConsumer = null;
-
-    /**
-     * Constructs a new handler which handles root item of xml file.
-     * You should pass this item to {@link AbstractXmlParser#read}.
-     *
-     * @return new handler
-     */
-    public static Handler root() {
-        Handler h = new Handler();
-        h.active = true;
-        return h;
-    }
-
-    /**
-     * Defines a handler of nested element. For example, if you need to process {@code book} elements nested
-     * into {@code library} element, you can build the following structure:
-     * <code>
-     *     Handler root = Handler.root();
-     *     root.then("library").then("book");
-     * </code>
-     * <p>See {@link Handler#or} if you need to process multiple different element tags.</p>
-     *
-     * @param token name of element to search
-     * @return      the created handler so you can build a pipeline
-     */
-    public Handler then(String token) {
-        Handler nextHandler = new Handler();
-        nextHandler.token = token;
-        if (children == null) {
-            children = new HashMap<>();
-        }
-        if (children.put(token, nextHandler) != null) {
-            throw new IllegalArgumentException("This element name already has a handler");
-        }
-        return nextHandler;
-    }
+    protected Consumer<String> textConsumer = null;
+    protected Consumer<Handler> startConsumer = null;
+    protected Consumer<Handler> finallyConsumer = null;
 
     /**
      * This method allows to combine tags so you can process different elements. For example,
-     * this is how you can read {@code author} and {@title} of books:
+     * this is how you can read {@code author} and {@code title} of books:
      * <code>
      *     &lt;book&gt;
      *         &lt;author&gt;Charles Michael Palahniuk&lt;/author&gt;
@@ -80,6 +43,9 @@ public class Handler implements XmlNodeHandler {
      * @return {@code this} that allows to continue the pipeline
      */
     public Handler or(String token, Consumer<Handler> consumer) {
+        if (consumer == null) {
+            throw new IllegalArgumentException("Consumer must not be null");
+        }
         consumer.accept(then(token));
         return this;
     }
@@ -93,6 +59,12 @@ public class Handler implements XmlNodeHandler {
      * @return {@code this} that allows to continue the pipeline
      */
     public Handler text(Consumer<String> consumer) {
+        if (consumer == null) {
+            throw new IllegalArgumentException("Consumer must not be null");
+        }
+        if (textConsumer != null) {
+            throw new IllegalStateException("Duplicate call to text()");
+        }
         textConsumer = consumer;
         return this;
     }
@@ -132,8 +104,8 @@ public class Handler implements XmlNodeHandler {
      * @return {@code this} that allows to continue the pipeline
      */
     public Handler propagate() {
-        if (token == null) {
-            throw new IllegalStateException("Can not propagate root handler");
+        if (textConsumer != null) {
+            throw new IllegalStateException("Method propagate() can not be combined with text()");
         }
         values = new HashMap<>();
         textConsumer = x -> values.put(null, x);
@@ -148,6 +120,12 @@ public class Handler implements XmlNodeHandler {
      * @return {@code this} that allows to continue the pipeline
      */
     public Handler open(Consumer<Handler> consumer) {
+        if (startConsumer != null) {
+            throw new IllegalStateException("Duplicate call of open()");
+        }
+        if (consumer == null) {
+            throw new IllegalArgumentException("Consumer must not be null");
+        }
         startConsumer = consumer;
         return this;
     }
@@ -159,6 +137,12 @@ public class Handler implements XmlNodeHandler {
      * @return {@code this} that allows to continue the pipeline
      */
     public Handler close(Consumer<Handler> consumer) {
+        if (finallyConsumer != null) {
+            throw new IllegalStateException("Duplicate call of close()");
+        }
+        if (consumer == null) {
+            throw new IllegalArgumentException("Consumer must not be null");
+        }
         finallyConsumer = consumer;
         return this;
     }
@@ -171,13 +155,18 @@ public class Handler implements XmlNodeHandler {
      */
     public String getProperty(String name) {
         if (values == null) {
-            return null;
+            throw new IllegalStateException("None of the children provided a value. Did you forgot propagate()?");
         } else {
             return values.get(name);
         }
     }
 
-    protected Handler() {}
+    protected Handler(String token) {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("Token must not be empty");
+        }
+        this.token = token;
+    }
 
     @Override
     public XmlNodeHandler onStartElement(String name) {
@@ -185,16 +174,7 @@ public class Handler implements XmlNodeHandler {
             return null;
         }
         if (active) {
-            Handler next = children.get(name);
-            if (next == null) {
-                return this;
-            }
-            next.active = true;
-            next.depth = 1;
-            if (next.startConsumer != null) {
-                next.startConsumer.accept(next);
-            }
-            return next;
+            return super.onStartElement(name);
         }
         return this;
     }
