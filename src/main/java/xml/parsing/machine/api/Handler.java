@@ -12,6 +12,7 @@ public class Handler implements XmlNodeHandler {
     private Map<String, String> values;
     private Map<String, Handler> children = null;
     private Consumer<String> textConsumer = null;
+    private Consumer<Handler> startConsumer = null;
     private Consumer<Handler> finallyConsumer = null;
 
     // builder
@@ -52,6 +53,11 @@ public class Handler implements XmlNodeHandler {
         return this;
     }
 
+    public Handler open(Consumer<Handler> consumer) {
+        startConsumer = consumer;
+        return this;
+    }
+
     public Handler close(Consumer<Handler> consumer) {
         finallyConsumer = consumer;
         return this;
@@ -79,6 +85,9 @@ public class Handler implements XmlNodeHandler {
             }
             next.active = true;
             next.depth = 1;
+            if (next.startConsumer != null) {
+                next.startConsumer.accept(next);
+            }
             return next;
         }
         return this;
