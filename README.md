@@ -68,7 +68,7 @@ try (StringReader reader = new StringReader(xml) {
     root.then("library").then("book")
         .or("author", x -> Handler::propagate)
         .or("title",  x -> Handler::propagate)
-        .close(book -> System.out.println(book.getProperty("author") + ';' + book.getProperty("title")));
+        .close(book -> System.out.println(book.getProperty("author") + ',' + book.getProperty("title")));
     parser.read(root);
 }
 ```

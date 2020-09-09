@@ -20,10 +20,10 @@ public class RootHandler implements XmlNodeHandler {
     /**
      * Defines a handler of nested element. For example, if you need to process {@code book} elements nested
      * into {@code library} element, you can build the following structure:
-     * <code>
+     * <pre>
      *     Handler root = Handler.root();
      *     root.then("library").then("book");
-     * </code>
+     * </pre>
      * <p>See {@link Handler#or} if you need to process multiple different element tags.</p>
      *
      * @param token name of element to search

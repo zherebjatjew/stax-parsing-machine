@@ -44,7 +44,7 @@ public interface XmlNodeHandler {
     int up();
 
     /**
-     * Returns {@link true} while parser processes matching element.
+     * Returns {@code true} while parser processes matching element.
      *
      * @return true if parser stays on element matching to the handler
      */

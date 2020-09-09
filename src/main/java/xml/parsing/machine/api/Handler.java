@@ -24,19 +24,19 @@ public class Handler extends RootHandler {
     /**
      * This method allows to combine tags so you can process different elements. For example,
      * this is how you can read {@code author} and {@code title} of books:
-     * <code>
+     * <pre>
      *     &lt;book&gt;
      *         &lt;author&gt;Charles Michael Palahniuk&lt;/author&gt;
      *         &lt;title&gt;Fight Club&lt;/title&gt;
-     *     &lt;/book&gt
-     * </code>
+     *     &lt;/book&gt;
+     * </pre>
      * you can build this structure:
-     * <code>
+     * <pre>
      *     Handler root = Handler.root();
      *     root.then("book")
-     *         .or("author", a -> a.text(MyClass::storeAuthor)
-     *         .or("title", t -> t.text(MyClass::storeTitle);
-     * </code>
+     *         .or("author", a -&gt; a.text(MyClass::storeAuthor)
+     *         .or("title", t -&gt; t.text(MyClass::storeTitle);
+     * </pre>
      *
      * @param token element name to wait for
      * @param consumer function to customize the nested handler
@@ -75,21 +75,21 @@ public class Handler extends RootHandler {
      * so they can be processed in one place.
      * <p>The values can be accessed through {@link Handler#getProperty(String)} where property name is
      * the same as corresponding element name:</p>
-     * <code>
+     * <pre>
      *     Handler root = Handler.root();
      *     root.then("book")
      *         .or("title", Handler::propagate)
      *         .or("author", Handler::propagate)
-     *         .close(book -> {
+     *         .close(book -&gt; {
      *             MyClass::setAuthor(book.getProperty("author"));
      *             MyClass::setTitle(book.getProperty("title"));
      *         }
-     * </code>
+     * </pre>
      * <p>Propagation can be nested:</p>
-     * <code>
+     * <pre>
      *     Handler root = Handler.root();
      *     root.then("book")
-     *         .close(book -> {
+     *         .close(book -&gt; {
      *             MyClass::setAuthor(book.getProperty("meta/author"));
      *             MyClass::setTitle(book.getProperty("meta/title"));
      *         }
@@ -97,7 +97,7 @@ public class Handler extends RootHandler {
      *             .or("title", Handler::propagate)
      *             .or("author", Handler::propagate)
      *             .propagate();
-     * </code>
+     * </pre>
      * <p>The given example wont work correctly if {@code book} element has multiple {@code meta} children.
      * In this case you will get values of the last {@code meta} item.</p>
      *
