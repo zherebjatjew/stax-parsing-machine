@@ -147,7 +147,7 @@ class StaxParserTest {
                         fields.add("author=" + h.getProperty("meta/author"));
                         fields.add("title=" + h.getProperty("meta/title"));
                     }).then("meta")
-                    .or("author", x -> x.text(System.out::println))
+                    .or("author", Handler::propagate)
                     .or("title", Handler::propagate)
                     .propagate();
             parser.read(root);
