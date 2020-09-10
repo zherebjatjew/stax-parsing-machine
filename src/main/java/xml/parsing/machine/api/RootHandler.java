@@ -2,6 +2,7 @@ package xml.parsing.machine.api;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class RootHandler implements XmlNodeHandler {
@@ -15,6 +16,30 @@ public class RootHandler implements XmlNodeHandler {
      */
     public static RootHandler instance() {
         return new RootHandler();
+    }
+
+    /**
+     * More comfortable alternative to {@link RootHandler#instance()}.
+     * <p>It eliminates the need of {@code RootHandler} variable. Instead of</p>
+     * <pre>
+     *     RootHandler root = RootHandler.instance();
+     *     root.then("library");
+     *     parser.read(root);
+     * </pre>
+     * <p>we can have</p>
+     * <pre>
+     *     parser.read(RootHandler.instance("library", h -&gt; h.then("library"));
+     * </pre>
+     *
+     * @param rootToken name of root element
+     * @param howToProcess function to customize handler
+     * @return root handler that can be passed to {@link AbstractXmlParser#read(XmlNodeHandler)}
+     */
+    public static RootHandler instance(String rootToken, Consumer<Handler> howToProcess) {
+        RootHandler result = new RootHandler();
+        Handler h = result.then(rootToken);
+        howToProcess.accept(h);
+        return result;
     }
 
     /**
