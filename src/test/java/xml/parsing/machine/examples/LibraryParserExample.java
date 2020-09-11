@@ -36,9 +36,7 @@ public class LibraryParserExample {
         try (FileInputStream reader = new FileInputStream(f)) {
             XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
-            RootHandler root = RootHandler.instance();
-            // Expect path library/book
-            root.then("library").then("book")
+            parser.read(RootHandler.instance("library", root -> root.then("book")
                 // When we met a book, we create a new Book instance to fill later
                 .open(x -> builder.newBook())
                 // We will be reading 'title', 'author', and 'file' children of book element
@@ -50,8 +48,8 @@ public class LibraryParserExample {
                     .or("path", Handler::propagate)
                     // ... and process respecting the values we've got
                     .close(h -> builder.addFile(h.getProperty("type"), h.getProperty("path")))
-                );
-            parser.read(root);
+                )
+            ));
         }
         builder.getBooks().stream().map(Book::toString).forEach(System.out::println);
     }

@@ -38,11 +38,11 @@ you can do it easily:
 try (StringReader reader = new StringReader(xml) {
     StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
         .createXMLStreamReader(reader));
-    RootHandler root = RootHandler.instance();
-    root.then("library").then("book")
+    parser.read(RootHandler.instance(
+        "library", r -> r.then("book")
         .or("author", x -> x.text(System.out::println))
-        .or("title",  x -> x.text(System.out::println));
-    parser.read(root);
+        .or("title",  x -> x.text(System.out::println)))
+    );
 }
 
 ```
@@ -64,12 +64,12 @@ It tells the machine to publish text of a node to its parent.
 try (StringReader reader = new StringReader(xml) {
     StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
         .createXMLStreamReader(reader));
-    RootHandler root = RootHandler.instance();
-    root.then("library").then("book")
+    parser.read(RootHandler.instance(
+        "library", r -> r.then("book")
         .or("author", x -> Handler::propagate)
         .or("title",  x -> Handler::propagate)
-        .close(book -> System.out.println(book.getProperty("author") + ',' + book.getProperty("title")));
-    parser.read(root);
+        .close(book -> System.out.println(book.getProperty("author") + ',' + book.getProperty("title"))))
+    );
 }
 ```
 Output:
