@@ -109,8 +109,8 @@ class StaxParserTest {
 
     @Test
     public void shouldReportForgottenPropagate() throws XMLStreamException {
-        List<String> fields = new ArrayList<>();
         try (StringReader reader = new StringReader("<book></book>")) {
+            List<String> fields = new ArrayList<>();
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
             RootHandler root = RootHandler.instance();
             root.then("book")
@@ -154,5 +154,50 @@ class StaxParserTest {
             parser.read(RootHandler.instance("book", r -> r.text(fields::add)));
         }
         assertEquals("text", fields.get(0));
+    }
+
+    @Test
+    public void shouldReadAttributes() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<book name='book title'>text</book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("book", r -> r
+                    .withAttributes()
+                    .close(h -> fields.add(h.getProperty("@name")))));
+        }
+        assertEquals("book title", fields.get(0));
+    }
+
+    @Test
+    public void shouldReadAttributesFromMultipleNodes() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader(
+                "<library><book name='book 1'>text</book><book name='book 2'>text</book></library>"))
+        {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("library", b -> b.then("book")
+                    .withAttributes()
+                    .close(h -> fields.add("@name=" + h.getProperty("@name")))));
+        }
+        assertTrue(fields.contains("@name=book 1"));
+        assertTrue(fields.contains("@name=book 2"));
+    }
+
+    @Test
+    public void shouldCombineAttributesWithPropagatedValues() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<book name='book title'><teaser>text</teaser></book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("book", r -> r
+                    .withAttributes()
+                    .close(h -> {
+                        fields.add("@name=" + h.getProperty("@name"));
+                        fields.add("teaser=" + h.getProperty("teaser"));
+                    })
+                    .then("teaser").propagate()
+            ));
+        }
+        assertTrue(fields.contains("@name=book title"));
+        assertTrue(fields.contains("teaser=text"));
     }
 }

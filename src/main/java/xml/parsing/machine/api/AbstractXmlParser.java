@@ -4,6 +4,7 @@ package xml.parsing.machine.api;
 import javax.xml.stream.XMLStreamConstants;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Map;
 
 
 /**
@@ -33,6 +34,9 @@ public abstract class AbstractXmlParser {
                             activeHandler.down();
                         } else {
                             handlers.push(nextHandler);
+                            if (nextHandler.needAttributes()) {
+                                nextHandler.onAttributes(getAttributes());
+                            }
                         }
                     } else {
                         activeHandler.down();
@@ -75,4 +79,6 @@ public abstract class AbstractXmlParser {
      * @return text of element
      */
     protected abstract String getElementText();
+
+    protected abstract Map<String, String> getAttributes();
 }

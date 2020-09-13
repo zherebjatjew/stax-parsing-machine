@@ -1,7 +1,6 @@
 package xml.parsing.machine.api;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -15,6 +14,7 @@ import java.util.function.Supplier;
 public class Handler extends RootHandler {
     protected int depth = 1;
     protected boolean active = false;
+    protected boolean attributed = false;
     private final String token;
     private Map<String, String> values;
     protected Consumer<String> textConsumer = null;
@@ -107,14 +107,33 @@ public class Handler extends RootHandler {
         if (textConsumer != null) {
             throw new IllegalStateException("Method propagate() can not be combined with text()");
         }
-        values = new HashMap<>();
+        if (values == null) {
+            values = new HashMap<>();
+        }
         textConsumer = x -> values.put(null, x);
         return this;
     }
 
     /**
+     * Tells the handler to collect node attributes.
+     * <p>
+     * Attributes then are stored in handler's properties (see {@link Handler#getProperty(String)} but
+     * can be accessed only in {@link Handler#close(Consumer)}. They are not filled at the moment
+     * when {@link Handler#open(Consumer)} is called.
+     * </p>
+     * @return {@code this} that allows to continue the pipeline
+     */
+    public Handler withAttributes() {
+        attributed = true;
+        if (values == null) {
+            values = new HashMap<>();
+        }
+        return this;
+    }
+
+    /**
      * Defines action to take when the system finds matching element.
-     * Fires before any other actions for the element.
+     * Fires before any other actions for the element. Node attributes are not
      *
      * @param consumer action
      * @return {@code this} that allows to continue the pipeline
@@ -148,7 +167,10 @@ public class Handler extends RootHandler {
     }
 
     /**
-     * Get property propagated to the handler by nested handlers(2).
+     * Get property propagated to the handler by nested handlers.
+     * <p>The method can also return note attributes (prefixed with '@') if {@link Handler#withAttributes()}
+     * was called. Propagated attribute name starts with owner node name: {@code owner/@attributeName}</p>
+     * <p>Please pay attention: attributes are not available in {@link Handler#open(Consumer)}.</p>
      *
      * @param name property name. See {@link Handler#propagate()}
      * @return {@code this} that allows to continue the pipeline
@@ -184,6 +206,16 @@ public class Handler extends RootHandler {
         if (active && textConsumer != null) {
             textConsumer.accept(text.get());
         }
+    }
+
+    @Override
+    public void onAttributes(Map<String, String> values) {
+        assert attributed;
+        assert this.values != null;
+        if (values == null) {
+            throw new IllegalArgumentException("Argument must not be null");
+        }
+        values.forEach((key, value) -> this.values.put("@" + key, value));
     }
 
     @Override
@@ -229,5 +261,10 @@ public class Handler extends RootHandler {
     @Override
     public boolean isActive() {
         return depth == 1;
+    }
+
+    @Override
+    public boolean needAttributes() {
+        return attributed;
     }
 }

@@ -1,5 +1,6 @@
 package xml.parsing.machine.api;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
 
@@ -15,6 +16,8 @@ public interface XmlNodeHandler {
      *         Returns new handler if we know how to process this element.
      */
     XmlNodeHandler onStartElement(String name);
+
+    void onAttributes(Map<String, String> attributes);
 
     /**
      * Called when parser has got text of element.
@@ -49,4 +52,11 @@ public interface XmlNodeHandler {
      * @return true if parser stays on element matching to the handler
      */
     boolean isActive();
+
+    /**
+     * Defines whether the handler needs node attributes.
+     *
+     * @return true to fill in attributes
+     */
+    boolean needAttributes();
 }
