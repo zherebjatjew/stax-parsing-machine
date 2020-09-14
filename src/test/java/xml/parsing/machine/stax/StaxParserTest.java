@@ -200,4 +200,22 @@ class StaxParserTest {
         assertTrue(fields.contains("@name=book title"));
         assertTrue(fields.contains("teaser=text"));
     }
+
+    @Test
+    public void shouldResetPropertiesOfPrefNode() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<books><book language='ru'><content>text 1</content></book><book><content>text 2</content></book></books>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("books", r -> r
+                    .then("book").withAttributes().close(h -> {
+                        if ("ru".equals(h.getProperty("@language"))) {
+                            fields.add(h.getProperty("content"));
+                        }
+                    }).then("content").propagate()
+            ));
+        }
+        assertTrue(fields.contains("text 1"));
+        assertFalse(fields.contains("text 2"));
+
+    }
 }

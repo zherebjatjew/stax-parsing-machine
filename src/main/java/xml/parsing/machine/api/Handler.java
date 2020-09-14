@@ -242,6 +242,9 @@ public class Handler extends RootHandler {
                 h.values.put(key, v);
             });
         }
+        if (values != null) {
+            values.clear();
+        }
     }
 
     @Override
