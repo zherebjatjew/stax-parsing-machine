@@ -6,7 +6,7 @@
 
     <groupId>xml.parsing</groupId>
     <artifactId>xml-machine</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
