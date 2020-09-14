@@ -216,6 +216,20 @@ class StaxParserTest {
         }
         assertTrue(fields.contains("text 1"));
         assertFalse(fields.contains("text 2"));
+    }
 
+    @Test
+    public void shouldTakeOnlyNodesWhereAssumptionIsTrue() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<books><book language='ru'><content>text 1</content></book><book><content>text 2</content></book></books>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("books", r -> r
+                    .then("book").withAttributes()
+                    .assume(book -> "ru".equals(book.getProperty("@language")))
+                    .then("content").text(fields::add)
+            ));
+        }
+        assertTrue(fields.contains("text 1"));
+        assertFalse(fields.contains("text 2"));
     }
 }

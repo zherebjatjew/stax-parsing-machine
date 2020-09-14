@@ -2,6 +2,7 @@ package xml.parsing.machine.api;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 
@@ -20,6 +21,7 @@ public class Handler extends RootHandler {
     protected Consumer<String> textConsumer = null;
     protected Consumer<Handler> startConsumer = null;
     protected Consumer<Handler> finallyConsumer = null;
+    private Function<Handler, Boolean> assumption;
 
     /**
      * This method allows to combine tags so you can process different elements. For example,
@@ -167,6 +169,40 @@ public class Handler extends RootHandler {
     }
 
     /**
+     * Allows to filter node on custom criteria.
+     * <p>
+     * The assumption is checked at the start of each child node. If it returns {@code FALSE},
+     * the child node will be skipped.
+     * </p>
+     * <p>
+     * Useful for checking attributes. For example, this code will print content of only Russian books:
+     * </p>
+     * <p>
+     * WARNING. The argument of the assumption is the active node, not it's child.
+     * </p>
+     * <pre>
+     * StringReader reader = new StringReader("&lt;books&gt;&lt;book language='ru'&gt;&lt;content&gt;text 1&lt;/content&gt;&lt;/book&gt;&lt;book&gt;&lt;content&gt;text 2&lt;/content&gt;&lt;/book&gt;&lt;/books&gt;")) {
+     * StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+     * parser.read(RootHandler.instance("books", r -&gt; r
+     *     .then("book").withAttributes()
+     *     .assume(book -&gt; "ru".equals(book.getProperty("@language")))
+     *     .then("content").text(System.out::println)
+     * ));
+     * </pre>
+     *
+     * @param assumption function that controls processing of child node
+     * @return {@code this} that allows to continue the pipeline
+     */
+    public Handler assume(Function<Handler, Boolean> assumption) {
+        if (this.assumption == null) {
+            this.assumption = assumption;
+        } else {
+            throw new IllegalStateException("Duplicate call to assume");
+        }
+        return this;
+    }
+
+    /**
      * Get property propagated to the handler by nested handlers.
      * <p>The method can also return note attributes (prefixed with '@') if {@link Handler#withAttributes()}
      * was called. Propagated attribute name starts with owner node name: {@code owner/@attributeName}</p>
@@ -196,7 +232,9 @@ public class Handler extends RootHandler {
             return null;
         }
         if (active) {
-            return super.onStartElement(name);
+            if (assumption == null || !Boolean.FALSE.equals(assumption.apply(this))) {
+                return super.onStartElement(name);
+            }
         }
         return this;
     }
