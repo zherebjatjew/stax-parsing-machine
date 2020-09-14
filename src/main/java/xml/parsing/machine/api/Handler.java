@@ -1,8 +1,8 @@
 package xml.parsing.machine.api;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 
@@ -15,11 +15,13 @@ import java.util.function.Supplier;
 public class Handler extends RootHandler {
     protected int depth = 1;
     protected boolean active = false;
+    protected boolean attributed = false;
     private final String token;
     private Map<String, String> values;
     protected Consumer<String> textConsumer = null;
     protected Consumer<Handler> startConsumer = null;
     protected Consumer<Handler> finallyConsumer = null;
+    private Function<Handler, Boolean> assumption;
 
     /**
      * This method allows to combine tags so you can process different elements. For example,
@@ -107,14 +109,33 @@ public class Handler extends RootHandler {
         if (textConsumer != null) {
             throw new IllegalStateException("Method propagate() can not be combined with text()");
         }
-        values = new HashMap<>();
+        if (values == null) {
+            values = new HashMap<>();
+        }
         textConsumer = x -> values.put(null, x);
         return this;
     }
 
     /**
+     * Tells the handler to collect node attributes.
+     * <p>
+     * Attributes then are stored in handler's properties (see {@link Handler#getProperty(String)} but
+     * can be accessed only in {@link Handler#close(Consumer)}. They are not filled at the moment
+     * when {@link Handler#open(Consumer)} is called.
+     * </p>
+     * @return {@code this} that allows to continue the pipeline
+     */
+    public Handler withAttributes() {
+        attributed = true;
+        if (values == null) {
+            values = new HashMap<>();
+        }
+        return this;
+    }
+
+    /**
      * Defines action to take when the system finds matching element.
-     * Fires before any other actions for the element.
+     * Fires before any other actions for the element. Node attributes are not
      *
      * @param consumer action
      * @return {@code this} that allows to continue the pipeline
@@ -148,7 +169,44 @@ public class Handler extends RootHandler {
     }
 
     /**
-     * Get property propagated to the handler by nested handlers(2).
+     * Allows to filter node on custom criteria.
+     * <p>
+     * The assumption is checked at the start of each child node. If it returns {@code FALSE},
+     * the child node will be skipped.
+     * </p>
+     * <p>
+     * Useful for checking attributes. For example, this code will print content of only Russian books:
+     * </p>
+     * <p>
+     * WARNING. The argument of the assumption is the active node, not it's child.
+     * </p>
+     * <pre>
+     * StringReader reader = new StringReader("&lt;books&gt;&lt;book language='ru'&gt;&lt;content&gt;text 1&lt;/content&gt;&lt;/book&gt;&lt;book&gt;&lt;content&gt;text 2&lt;/content&gt;&lt;/book&gt;&lt;/books&gt;")) {
+     * StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+     * parser.read(RootHandler.instance("books", r -&gt; r
+     *     .then("book").withAttributes()
+     *     .assume(book -&gt; "ru".equals(book.getProperty("@language")))
+     *     .then("content").text(System.out::println)
+     * ));
+     * </pre>
+     *
+     * @param assumption function that controls processing of child node
+     * @return {@code this} that allows to continue the pipeline
+     */
+    public Handler assume(Function<Handler, Boolean> assumption) {
+        if (this.assumption == null) {
+            this.assumption = assumption;
+        } else {
+            throw new IllegalStateException("Duplicate call to assume");
+        }
+        return this;
+    }
+
+    /**
+     * Get property propagated to the handler by nested handlers.
+     * <p>The method can also return note attributes (prefixed with '@') if {@link Handler#withAttributes()}
+     * was called. Propagated attribute name starts with owner node name: {@code owner/@attributeName}</p>
+     * <p>Please pay attention: attributes are not available in {@link Handler#open(Consumer)}.</p>
      *
      * @param name property name. See {@link Handler#propagate()}
      * @return {@code this} that allows to continue the pipeline
@@ -174,7 +232,9 @@ public class Handler extends RootHandler {
             return null;
         }
         if (active) {
-            return super.onStartElement(name);
+            if (assumption == null || !Boolean.FALSE.equals(assumption.apply(this))) {
+                return super.onStartElement(name);
+            }
         }
         return this;
     }
@@ -184,6 +244,16 @@ public class Handler extends RootHandler {
         if (active && textConsumer != null) {
             textConsumer.accept(text.get());
         }
+    }
+
+    @Override
+    public void onAttributes(Map<String, String> values) {
+        assert attributed;
+        assert this.values != null;
+        if (values == null) {
+            throw new IllegalArgumentException("Argument must not be null");
+        }
+        values.forEach((key, value) -> this.values.put("@" + key, value));
     }
 
     @Override
@@ -210,6 +280,9 @@ public class Handler extends RootHandler {
                 h.values.put(key, v);
             });
         }
+        if (values != null) {
+            values.clear();
+        }
     }
 
     @Override
@@ -229,5 +302,10 @@ public class Handler extends RootHandler {
     @Override
     public boolean isActive() {
         return depth == 1;
+    }
+
+    @Override
+    public boolean needAttributes() {
+        return attributed;
     }
 }

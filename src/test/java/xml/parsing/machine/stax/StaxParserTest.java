@@ -109,8 +109,8 @@ class StaxParserTest {
 
     @Test
     public void shouldReportForgottenPropagate() throws XMLStreamException {
-        List<String> fields = new ArrayList<>();
         try (StringReader reader = new StringReader("<book></book>")) {
+            List<String> fields = new ArrayList<>();
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
             RootHandler root = RootHandler.instance();
             root.then("book")
@@ -154,5 +154,82 @@ class StaxParserTest {
             parser.read(RootHandler.instance("book", r -> r.text(fields::add)));
         }
         assertEquals("text", fields.get(0));
+    }
+
+    @Test
+    public void shouldReadAttributes() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<book name='book title'>text</book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("book", r -> r
+                    .withAttributes()
+                    .close(h -> fields.add(h.getProperty("@name")))));
+        }
+        assertEquals("book title", fields.get(0));
+    }
+
+    @Test
+    public void shouldReadAttributesFromMultipleNodes() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader(
+                "<library><book name='book 1'>text</book><book name='book 2'>text</book></library>"))
+        {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("library", b -> b.then("book")
+                    .withAttributes()
+                    .close(h -> fields.add("@name=" + h.getProperty("@name")))));
+        }
+        assertTrue(fields.contains("@name=book 1"));
+        assertTrue(fields.contains("@name=book 2"));
+    }
+
+    @Test
+    public void shouldCombineAttributesWithPropagatedValues() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<book name='book title'><teaser>text</teaser></book>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("book", r -> r
+                    .withAttributes()
+                    .close(h -> {
+                        fields.add("@name=" + h.getProperty("@name"));
+                        fields.add("teaser=" + h.getProperty("teaser"));
+                    })
+                    .then("teaser").propagate()
+            ));
+        }
+        assertTrue(fields.contains("@name=book title"));
+        assertTrue(fields.contains("teaser=text"));
+    }
+
+    @Test
+    public void shouldResetPropertiesOfPrefNode() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<books><book language='ru'><content>text 1</content></book><book><content>text 2</content></book></books>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("books", r -> r
+                    .then("book").withAttributes().close(h -> {
+                        if ("ru".equals(h.getProperty("@language"))) {
+                            fields.add(h.getProperty("content"));
+                        }
+                    }).then("content").propagate()
+            ));
+        }
+        assertTrue(fields.contains("text 1"));
+        assertFalse(fields.contains("text 2"));
+    }
+
+    @Test
+    public void shouldTakeOnlyNodesWhereAssumptionIsTrue() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<books><book language='ru'><content>text 1</content></book><book><content>text 2</content></book></books>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("books", r -> r
+                    .then("book").withAttributes()
+                    .assume(book -> "ru".equals(book.getProperty("@language")))
+                    .then("content").text(fields::add)
+            ));
+        }
+        assertTrue(fields.contains("text 1"));
+        assertFalse(fields.contains("text 2"));
     }
 }

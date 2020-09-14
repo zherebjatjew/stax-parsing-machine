@@ -82,6 +82,10 @@ public class RootHandler implements XmlNodeHandler {
     }
 
     @Override
+    public void onAttributes(Map<String, String> attributes) {
+    }
+
+    @Override
     public void onText(Supplier<String> text) {
     }
 
@@ -102,5 +106,10 @@ public class RootHandler implements XmlNodeHandler {
     @Override
     public boolean isActive() {
         return true;
+    }
+
+    @Override
+    public boolean needAttributes() {
+        return false;
     }
 }

@@ -35,6 +35,7 @@ public class LibraryParserExample {
         File f = new File(getClass().getClassLoader().getResource("books.xml").getFile());
         try (FileInputStream reader = new FileInputStream(f)) {
             XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
+            xmlFactory.setProperty(XMLInputFactory.IS_COALESCING, true);
             StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
             parser.read(RootHandler.instance("library", root -> root.then("book")
                 // When we met a book, we create a new Book instance to fill later
