@@ -22,11 +22,11 @@ Parser can use any Stax-based xml reader. In tests, I use the native one,
 Let's go to the code. Imagine you have an xml:
 ```xml
 <library>
-    <book>
+    <book language="en">
         <title>American Gods</title>
         <author>Neil Gaiman</author>
     </book>
-    <book>
+    <book language="pl">
         <author>Chuck Palahniuk</author>
         <title>Fight Club</title>
     </book>
@@ -53,6 +53,9 @@ Neil Gaiman
 Chuck Palahniuk
 Fight Club
 ```
+
+Value propagation
+---
 
 You can notice that it is not quite fancy because authors and titles go in a random order.
 What if you have to prepare a CSV where first column contains authors and second column
@@ -82,10 +85,54 @@ E.g., in the snippet above, if you propagated book node, you can address values 
 as `book/author` and `book/title`.
 
 
+Attributes
+---
+
+By default, the parser skips attributes for the sake of performance. You can turn on attribute fetching
+explicitly for separate nodes.
+
+Attributes can be propagated. Let's filter from our books only English versions. Notice
+new `withAttributes` instruction, and that attribute is referenced with '@' prefix.
+
+```java
+try (StringReader reader = new StringReader(xml) {
+    StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
+        .createXMLStreamReader(reader));
+    parser.read(RootHandler.instance(
+        "library", r -> r.then("book").withAttributes()
+        .or("author", x -> Handler::propagate)
+        .or("title",  x -> Handler::propagate)
+        .close(book -> {
+            if ("en".equals(book.getProperty("@language") {
+                System.out.println(book.getProperty("author") + ',' + book.getProperty("title"))))
+            }
+        }
+    );
+}
+``` 
+
+
+Assumptions
+---
+
+The example above can be implemented in more concise way by using assumptions.
+```java
+try (StringReader reader = new StringReader(xml) {
+    StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
+        .createXMLStreamReader(reader));
+    parser.read(RootHandler.instance(
+        "library", r -> r.then("book").withAttributes()
+        .assume(f -> "en".equals(f.getProperty("@language"))
+        .or("author", x -> Handler::propagate)
+        .or("title",  x -> Handler::propagate)
+        .close(book -> System.out.println(book.getProperty("author") + ',' + book.getProperty("title"))))
+    );
+}
+``` 
+
+
 Limitations
 ===========
 
-1. The current version does not support attributes.
 1. The machine matches nodes by full node name.
  You cannot use patterns in methods `Handler#then`, `Handler#or`.
-1. I did not publish the code to maven repository so you cannot include it as a dependency.
