@@ -50,10 +50,17 @@ public class Handler extends RootHandler {
      * </pre>
      * you can build this structure:
      * <pre>
-     *     Handler root = Handler.root();
+     *     RootHandler root = RootHandler.instance();
      *     root.then("book")
      *         .or("author", a -&gt; a.text(MyClass::storeAuthor)
      *         .or("title", t -&gt; t.text(MyClass::storeTitle);
+     * </pre>
+     * An alternative can be
+     * <pre>
+     *     RootHandler root = RootHandler.instance();
+     *     Handler book = root.then("book");
+     *     book.then("author").text(MyClass::storeAuthor);
+     *     book.then("title").text(MyClass::storeAuthor);
      * </pre>
      *
      * @param token element name to wait for
@@ -94,8 +101,7 @@ public class Handler extends RootHandler {
      * <p>The values can be accessed through {@link Handler#getProperty(String)} where property name is
      * the same as corresponding element name:</p>
      * <pre>
-     *     Handler root = Handler.root();
-     *     root.then("book")
+     *     RootHandler.instance("book", book -&gt; book
      *         .or("title", Handler::propagate)
      *         .or("author", Handler::propagate)
      *         .close(book -&gt; {
@@ -105,8 +111,7 @@ public class Handler extends RootHandler {
      * </pre>
      * <p>Propagation can be nested:</p>
      * <pre>
-     *     Handler root = Handler.root();
-     *     root.then("book")
+     *     RootHandler.instance("book", book -&gt; book
      *         .close(book -&gt; {
      *             MyClass::setAuthor(book.getProperty("meta/author"));
      *             MyClass::setTitle(book.getProperty("meta/title"));
