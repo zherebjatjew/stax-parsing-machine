@@ -9,16 +9,16 @@
     <description>State machine builder for parsing XML based ont StaX</description>
     <url>https://github.com/zherebjatjew/stax-parsing-machine</url>
 
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+    <parent>
+        <groupId>com.fasterxml</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>38</version>
+    </parent>
 
     <scm>
         <connection>scm:git:git@github.com:zherebjatjew/stax-parsing-machine.git</connection>
+        <developerConnection>scm:git:git@github.com:zherebjatjew/stax-parsing-machine.git</developerConnection>
+        <url>https://github.com/zherebjatjew/stax-parsing-machine</url>
       <tag>HEAD</tag>
   </scm>
 
@@ -40,6 +40,7 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
+    <!--
     <build>
         <plugins>
             <plugin>
@@ -120,6 +121,6 @@
             </plugin>
         </plugins>
     </build>
-
+    -->
 
 </project>
