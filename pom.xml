@@ -4,7 +4,7 @@
 
     <groupId>com.github.zherebjatjew</groupId>
     <artifactId>xml-machine</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
     <name>Xml parsing state machine</name>
     <description>State machine builder for parsing XML based ont StaX</description>
     <url>https://github.com/zherebjatjew/stax-parsing-machine</url>
@@ -19,9 +19,16 @@
         <connection>scm:git:git@github.com:zherebjatjew/stax-parsing-machine.git</connection>
         <developerConnection>scm:git:git@github.com:zherebjatjew/stax-parsing-machine.git</developerConnection>
         <url>https://github.com/zherebjatjew/stax-parsing-machine</url>
-      <tag>HEAD</tag>
+      <tag>xml-machine-1.2</tag>
   </scm>
 
+    <properties>
+        <java.version>1.8</java.version>
+        <javac.src.version>${java.version}</javac.src.version>
+        <javac.target.version>${java.version}</javac.target.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
