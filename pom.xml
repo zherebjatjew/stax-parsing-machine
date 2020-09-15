@@ -4,7 +4,7 @@
 
     <groupId>com.github.zherebjatjew</groupId>
     <artifactId>xml-machine</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
     <name>Xml parsing state machine</name>
     <description>State machine builder for parsing XML based ont StaX</description>
     <url>https://github.com/zherebjatjew/stax-parsing-machine</url>
@@ -19,7 +19,6 @@
 
     <scm>
         <connection>scm:git:git@github.com:zherebjatjew/stax-parsing-machine.git</connection>
-      <tag>v1.1</tag>
   </scm>
 
     <dependencies>
