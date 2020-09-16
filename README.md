@@ -35,9 +35,8 @@ Let's go to the code. Imagine you have an xml:
 and you need to print out authors and titles. With the tool
 you can do it easily:
 ```java
-try (StringReader reader = new StringReader(xml) {
-    StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
-        .createXMLStreamReader(reader));
+try (StringReader reader = new StringReader(xml)) {
+    StaxParser parser = new StaxParser(XMLInputFactory.newInstance().createXMLStreamReader(reader));
     parser.read(RootHandler.instance(
         "library", r -> r.then("book")
         .or("author", x -> x.text(System.out::println))
@@ -64,9 +63,8 @@ contains book titles?
 To solve that we can take advantage of a powerful feature called propagation.
 It tells the machine to publish text of a node to its parent.
 ```java
-try (StringReader reader = new StringReader(xml) {
-    StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
-        .createXMLStreamReader(reader));
+try (StringReader reader = new StringReader(xml)) {
+    StaxParser parser = new StaxParser(XMLInputFactory.newInstance().createXMLStreamReader(reader));
     parser.read(RootHandler.instance(
         "library", r -> r.then("book")
         .or("author", x -> Handler::propagate)
@@ -95,9 +93,8 @@ Attributes can be propagated. Let's filter from our books only English versions.
 new `withAttributes` instruction, and that attribute is referenced with '@' prefix.
 
 ```java
-try (StringReader reader = new StringReader(xml) {
-    StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
-        .createXMLStreamReader(reader));
+try (StringReader reader = new StringReader(xml)) {
+    StaxParser parser = new StaxParser(XMLInputFactory.newInstance().createXMLStreamReader(reader));
     parser.read(RootHandler.instance(
         "library", r -> r.then("book").withAttributes()
         .or("author", x -> Handler::propagate)
@@ -110,16 +107,21 @@ try (StringReader reader = new StringReader(xml) {
     );
 }
 ``` 
-
+Ouput:
+```text
+Neil Gaiman,American Gods
+```
 
 Assumptions
 ---
+Assumption to a node allows to skip child nodes conditionally. To the moment of executing assumption,
+attributes of the node are already populated (if you did not forget to call `withAttributes`).
+Child node does not take part in the decision.
 
-The example above can be implemented in more concise way by using assumptions.
+The example above can be more concise by using assumptions:
 ```java
-try (StringReader reader = new StringReader(xml) {
-    StaxParser parser = new StaxParser(XMLInputFactory.newInstance()
-        .createXMLStreamReader(reader));
+try (StringReader reader = new StringReader(xml)) {
+    StaxParser parser = new StaxParser(XMLInputFactory.newInstance().createXMLStreamReader(reader));
     parser.read(RootHandler.instance(
         "library", r -> r.then("book").withAttributes()
         .assume(f -> "en".equals(f.getProperty("@language"))
@@ -129,10 +131,6 @@ try (StringReader reader = new StringReader(xml) {
     );
 }
 ``` 
-
-
-Limitations
-===========
-
-1. The machine matches nodes by full node name.
- You cannot use patterns in methods `Handler#then`, `Handler#or`.
+Ouput:
+```text
+Neil Gaiman,American Gods
