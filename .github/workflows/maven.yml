@@ -1,26 +1,21 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
-name: Publish to maven
-
+name: Publish package to the Maven Central Repository
 on:
   release:
-    types: [ created ]
-
+    types: [created]
 jobs:
   publish:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Java for publishing to GitHub Packages
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Publish to GitHub Packages
-      run: mvn -B deploy
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+      - uses: actions/checkout@v2
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+      - name: Publish package
+        run: mvn -B deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
