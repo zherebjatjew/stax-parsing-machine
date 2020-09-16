@@ -100,7 +100,7 @@ try (StringReader reader = new StringReader(xml)) {
         .or("author", x -> Handler::propagate)
         .or("title",  x -> Handler::propagate)
         .close(book -> {
-            if ("en".equals(book.getProperty("@language")) {
+            if ("en".equals(book.getProperty("@language"))) {
                 System.out.println(book.getProperty("author") + ',' + book.getProperty("title"))))
             }
         }
@@ -124,7 +124,7 @@ try (StringReader reader = new StringReader(xml)) {
     StaxParser parser = new StaxParser(XMLInputFactory.newInstance().createXMLStreamReader(reader));
     parser.read(RootHandler.instance(
         "library", r -> r.then("book").withAttributes()
-        .assume(f -> "en".equals(f.getProperty("@language"))
+        .assume(f -> "en".equals(f.getProperty("@language")))
         .or("author", x -> Handler::propagate)
         .or("title",  x -> Handler::propagate)
         .close(book -> System.out.println(book.getProperty("author") + ',' + book.getProperty("title"))))
