@@ -100,7 +100,7 @@ try (StringReader reader = new StringReader(xml)) {
         .or("author", x -> Handler::propagate)
         .or("title",  x -> Handler::propagate)
         .close(book -> {
-            if ("en".equals(book.getProperty("@language") {
+            if ("en".equals(book.getProperty("@language")) {
                 System.out.println(book.getProperty("author") + ',' + book.getProperty("title"))))
             }
         }
@@ -118,7 +118,7 @@ Assumption to a node allows to skip child nodes conditionally. To the moment of 
 attributes of the node are already populated (if you did not forget to call `withAttributes`).
 Child node does not take part in the decision.
 
-The example above can be more concise by using assumptions:
+The example above can be more concise with using assumptions:
 ```java
 try (StringReader reader = new StringReader(xml)) {
     StaxParser parser = new StaxParser(XMLInputFactory.newInstance().createXMLStreamReader(reader));
