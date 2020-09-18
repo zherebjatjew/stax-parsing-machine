@@ -53,6 +53,20 @@ Chuck Palahniuk
 Fight Club
 ```
 
+Also, you can chain you tags if you do not need to process the intermediate ones.
+This is true for both `RootHandler.instance` and `Handler.then`:
+```java
+try (StringReader reader = new StringReader(xml)) {
+    StaxParser parser = new StaxParser(XMLInputFactory.newInstance().createXMLStreamReader(reader));
+    parser.read(RootHandler.instance(
+        "library/book", r -> r
+        .or("author", x -> x.text(System.out::println))
+        .or("title",  x -> x.text(System.out::println)))
+    );
+}
+
+```
+
 Value propagation
 ---
 

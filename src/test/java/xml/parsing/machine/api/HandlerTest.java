@@ -68,8 +68,17 @@ class HandlerTest {
                 () -> RootHandler.instance().then("test").text(null));
     }
 
-    @Override
-    public String toString() {
-        return "RootHandler()";
+    @Test
+    public void shouldAcceptTokenChains() {
+        Handler h = RootHandler.instance().then("library/book/text");
+        assertNotNull(h);
+    }
+
+    @Test
+    public void shouldDenyEmptyTokenInChain() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> RootHandler.instance().then("library//text")
+        );
     }
 }

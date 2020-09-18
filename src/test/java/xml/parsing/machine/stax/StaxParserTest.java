@@ -250,4 +250,17 @@ class StaxParserTest {
         assertTrue(fields.contains("text 1"));
         assertFalse(fields.contains("text 2"));
     }
+
+    @Test
+    public void shouldRecognizeTokenChains() throws XMLStreamException {
+        List<String> fields = new ArrayList<>();
+        try (StringReader reader = new StringReader("<city><libs><library><books><book><text>content</text></book></books><text>should not appear in fields</text></library></libs></city>")) {
+            StaxParser parser = new StaxParser(xmlFactory.createXMLStreamReader(reader));
+            parser.read(RootHandler.instance("city", r -> r
+                    .then("libs/library/books/book/text").text(fields::add)
+            ));
+        }
+        assertEquals(1, fields.size());
+        assertTrue(fields.contains("content"));
+    }
 }
