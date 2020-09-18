@@ -121,7 +121,7 @@ public class Handler extends RootHandler {
      *             .or("author", Handler::propagate)
      *             .propagate();
      * </pre>
-     * <p>The given example wont work correctly if {@code book} element has multiple {@code meta} children.
+     * <p>NOTE The given example won't work correctly if {@code book} element has multiple {@code meta} children.
      * In this case you will get values of the last {@code meta} item.</p>
      *
      * @return {@code this} that allows to continue the pipeline
@@ -144,6 +144,7 @@ public class Handler extends RootHandler {
      * can be accessed only in {@link Handler#close(Consumer)}. They are not filled at the moment
      * when {@link Handler#open(Consumer)} is called.
      * </p>
+     * <p>See also {@link Handler#assume(Function)}.</p>
      * @return {@code this} that allows to continue the pipeline
      */
     public Handler withAttributes() {
@@ -156,7 +157,7 @@ public class Handler extends RootHandler {
 
     /**
      * Defines action to take when the system finds matching element.
-     * Fires before any other actions for the element. Node attributes are not
+     * Fires before any other actions for the element. Node attributes are not populated at this moment.
      *
      * @param consumer action
      * @return {@code this} that allows to continue the pipeline
@@ -196,10 +197,10 @@ public class Handler extends RootHandler {
      * the child node will be skipped.
      * </p>
      * <p>
-     * Useful for checking attributes. For example, this code will print content of only Russian books:
+     * NOTE The argument of the assumption is the active node, not it's child.
      * </p>
      * <p>
-     * WARNING. The argument of the assumption is the active node, not it's child.
+     * Useful for checking attributes. For example, this code will print content of Russian books only:
      * </p>
      * <pre>
      * StringReader reader = new StringReader("&lt;books&gt;&lt;book language='ru'&gt;&lt;content&gt;text 1&lt;/content&gt;&lt;/book&gt;&lt;book&gt;&lt;content&gt;text 2&lt;/content&gt;&lt;/book&gt;&lt;/books&gt;")) {

@@ -46,7 +46,11 @@ public class RootHandler implements XmlNodeHandler {
      * </pre>
      * <p>we can have</p>
      * <pre>
-     *     parser.read(RootHandler.instance("library", h -&gt; h.then("library"));
+     *     parser.read(RootHandler.instance("library", h -&gt; h.then("library")));
+     * </pre>
+     * <p>You can use path instead of singe tag:</p>
+     * <pre>
+     *     parser.read(RootHandler.instance("library/books/book/text", h &gt; h.text(System.out::println)));
      * </pre>
      *
      * @param rootToken name of root element
@@ -64,23 +68,45 @@ public class RootHandler implements XmlNodeHandler {
      * Defines a handler of nested element. For example, if you need to process {@code book} elements nested
      * into {@code library} element, you can build the following structure:
      * <pre>
-     *     Handler root = Handler.root();
+     *     RootHandler root = RootHandler.instance();
      *     root.then("library").then("book");
      * </pre>
-     * <p>See {@link Handler#or} if you need to process multiple different element tags.</p>
+     * <p>See {@link Handler#or} if you need to process multiple different child tags.</p>
+     * <p>
+     * It's possible to use tag chain:
+     * </p>
+     * <pre>
+     *     RootHandler root = RootHandler.instance();
+     *     root.then("library/row/shelf/books/book/name").text(System.out::printnl);
+     * </pre>
+     * <p>This feature is also available in {@link RootHandler#instance(String, Consumer)}.</p>
+     * <p>According to the <a url="https://www.w3.org/TR/REC-xml/#NT-Name">specification</a>
+     * of XML, you cannot have slashes in tag name, so there is no escaping ability for slashes in the path.</p>
      *
      * @param token name of element to search
      * @return      the created handler so you can build a pipeline
      */
     public Handler then(String token) {
-        Handler nextHandler = new Handler(token);
-        if (children == null) {
-            children = new HashMap<>();
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("Token must not be empty");
         }
-        if (children.put(token, nextHandler) != null) {
-            throw new IllegalArgumentException("This element name already has a handler");
+        String[] items = token.split("/");
+        RootHandler result = this;
+        try {
+            for (String element : items) {
+                Handler nextHandler = new Handler(element);
+                if (result.children == null) {
+                    result.children = new HashMap<>();
+                }
+                if (result.children.put(element, nextHandler) != null) {
+                    throw new IllegalArgumentException("This element name already has a handler");
+                }
+                result = nextHandler;
+            }
+            return (Handler) result;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Token path " + token + " contains empty element", e);
         }
-        return nextHandler;
     }
 
     protected RootHandler() {}
@@ -129,5 +155,10 @@ public class RootHandler implements XmlNodeHandler {
     @Override
     public boolean needAttributes() {
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "RootHandler()";
     }
 }
