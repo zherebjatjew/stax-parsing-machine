@@ -13,6 +13,7 @@ and easily operate with xml nodes respecting document structure.
 
 How to use
 ==========
+You can link the library as a dependency from maven central: https://mvnrepository.com/artifact/com.github.zherebjatjew/xml-machine
 
 There are two main components: state machine builder and xml parser.
 The parser takes the state machine and runs it against given XML.
